@@ -12,7 +12,7 @@ import (
 )
 
 func TestURLShortenerEndpoint(t *testing.T) {
-	t.Run("test / returns the correct string", func(t *testing.T) {
+	t.Run("/ returns the correct string", func(t *testing.T) {
 		handler := urlshortener.HomeHandler()
 
 		want := "Hello World"
@@ -29,9 +29,9 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		}
 	})
 
-	t.Run("test /api/vi/shorten returns the right response", func(t *testing.T) {
+	t.Run("/api/vi/shorten returns the right response", func(t *testing.T) {
 		url := "https://pkg.go.dev/net/http/httptest#NewRequest"
-		address, err := shortenAddress(url)
+		address, err := shortenAddress(url, urlshortener.GenerateShortString)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -46,8 +46,8 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		}
 	})
 
-	t.Run("test /api/v1/shorten fails on get request", func(t *testing.T) {
-		handler := urlshortener.ShortenHandler()
+	t.Run("/api/v1/shorten fails on get request", func(t *testing.T) {
+		handler := urlshortener.ShortenHandler(urlshortener.GenerateShortString)
 		request := httptest.NewRequest(http.MethodGet, "/api/v1/shorten", nil)
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
@@ -57,14 +57,41 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		}
 	})
 
-	t.Run("test /api/v1/address/:string returns the full address", func(t *testing.T) {
+	t.Run("/shorten with duplicate short address returns a 403 error", func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		url := "https://github.com/BenFaruna"
+
+		server := httptest.NewServer(urlshortener.ShortenHandler(generateSameString))
+		defer server.Close()
+
+		// first short string entry
+		json.NewEncoder(buf).Encode(urlshortener.Body{URL: url})
+		http.Post(server.URL+"/shorten", "application/json", buf)
+
+		// duplicate short string request
+		json.NewEncoder(buf).Encode(urlshortener.Body{URL: url})
+		response, err := http.Post(server.URL+"/shorten", "application/json", buf)
+		handleError(t, err)
+
+		statusCode := response.StatusCode
+		if statusCode != http.StatusForbidden {
+			t.Errorf("expected status code 403, got %d", statusCode)
+		}
+
+		_, err = buf.ReadFrom(response.Body)
+		handleError(t, err)
+
+		if buf.String() != urlshortener.ErrorDuplicateShortString.Error() {
+			t.Errorf("Expected error message %q, got %q", urlshortener.ErrorEmptyString, buf.String())
+		}
+	})
+
+	t.Run("/api/v1/address/:string returns the full address", func(t *testing.T) {
 		var output urlshortener.StatusMessage
 
 		url := "https://pkg.go.dev/net/http/httptest#NewRequest"
-		address, err := shortenAddress(url)
-		if err != nil {
-			t.Fatal(err)
-		}
+		address, err := shortenAddress(url, urlshortener.GenerateShortString)
+		handleError(t, err)
 
 		handler := urlshortener.GetFullAddressHandler()
 		request := httptest.NewRequest(http.MethodGet, "/address/"+address, nil)
@@ -78,14 +105,12 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		}
 	})
 
-	t.Run("test /:string redirects to the correct URL", func(t *testing.T) {
+	t.Run("/:string redirects to the correct URL", func(t *testing.T) {
 		server := httptest.NewServer(urlshortener.HomeHandler())
 		defer server.Close()
 		url := server.URL
-		address, err := shortenAddress(url)
-		if err != nil {
-			t.Fatal(err)
-		}
+		address, err := shortenAddress(url, urlshortener.GenerateShortString)
+		handleError(t, err)
 
 		request := httptest.NewRequest(http.MethodGet, "/"+address, nil)
 		response := httptest.NewRecorder()
@@ -93,10 +118,7 @@ func TestURLShortenerEndpoint(t *testing.T) {
 
 		want := response.Result().StatusCode
 		loc, err := response.Result().Location()
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		handleError(t, err)
 
 		if want != 301 {
 			t.Errorf("expected 301, got %d", want)
@@ -108,9 +130,9 @@ func TestURLShortenerEndpoint(t *testing.T) {
 	})
 }
 
-func shortenAddress(url string) (string, error) {
+func shortenAddress(url string, shortStringGenerator func() string) (string, error) {
 	buf := &bytes.Buffer{}
-	data, err := json.Marshal(urlshortener.Body{Url: url})
+	data, err := json.Marshal(urlshortener.Body{URL: url})
 	if err != nil {
 		return "", err
 	}
@@ -122,11 +144,22 @@ func shortenAddress(url string) (string, error) {
 	// url to shorten are sent as part of the body of the request
 	// shortened urls are six characters
 	// shortened urls are alphabets without special characters
-	handler := urlshortener.ShortenHandler()
+	handler := urlshortener.ShortenHandler(shortStringGenerator)
 	request := httptest.NewRequest(http.MethodPost, "/shorten", buf)
 	response := httptest.NewRecorder()
 
 	handler.ServeHTTP(response, request)
 	json.Unmarshal(response.Body.Bytes(), &output)
 	return output.Data, nil
+}
+
+func generateSameString() string {
+	return "AbCxYz"
+}
+
+func handleError(t testing.TB, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

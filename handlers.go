@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// HomeHandler accept requests to the home route and provide responses are redirection for short routes
 func HomeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -15,8 +16,8 @@ func HomeHandler() http.HandlerFunc {
 			fmt.Fprint(w, "Hello World")
 			return
 		default:
-			shortId := strings.TrimPrefix(r.URL.Path, "/")
-			url, ok := db[shortId]
+			shortID := strings.TrimPrefix(r.URL.Path, "/")
+			url, ok := db.Get(shortID)
 			if !ok {
 				errorHandler(w, r, 404)
 				return
@@ -27,7 +28,7 @@ func HomeHandler() http.HandlerFunc {
 	}
 }
 
-func ShortenHandler() http.Handler {
+func ShortenHandler(shortStringFunc func() string) http.Handler {
 	return Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/shorten" {
 			errorHandler(w, r, 404)
@@ -35,11 +36,16 @@ func ShortenHandler() http.Handler {
 		}
 		var data Body
 		json.NewDecoder(r.Body).Decode(&data)
-		generateShortString()
 
-		shortenedURL := generateShortString()
+		shortenedURL := shortStringFunc()
 
-		db[shortenedURL] = data.Url
+		shortenedURL, err := db.Add(data.URL, shortenedURL)
+
+		if err != nil {
+			w.WriteHeader(http.StatusForbidden)
+			fmt.Fprint(w, err.Error())
+			return
+		}
 
 		w.WriteHeader(201)
 		w.Header().Set("Content-Type", "application/json")
@@ -77,7 +83,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
 	}
 }
 
-func generateShortString() string {
+func GenerateShortString() string {
 	output := ""
 
 	for i := 0; i < 6; i++ {
