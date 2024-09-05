@@ -18,6 +18,12 @@ func main() {
 	script := http.FileServer(http.Dir("./static/js/"))
 	mux.Handle("/scripts/", http.StripPrefix("/scripts/", script))
 
+	styles := http.FileServer(http.Dir("./static/css/"))
+	mux.Handle("/styles/", http.StripPrefix("/styles/", styles))
+
+	script := http.FileServer(http.Dir("./static/js/"))
+	mux.Handle("/scripts/", http.StripPrefix("/scripts/", script))
+
 	if err := http.ListenAndServe(":8000", IncomingRequest(mux)); err != nil {
 		panic(err)
 	}
