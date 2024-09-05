@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 )
 
 type Body struct {
@@ -11,6 +12,10 @@ type Body struct {
 type StatusMessage struct {
 	Message string `json:"message"`
 	Data    string `json:"data,omitempty"`
+}
+
+type URLInfo struct {
+	URL, ShortAddress string
 }
 
 type ShortenedURLS map[string]string
@@ -43,6 +48,17 @@ func (s ShortenedURLS) Get(shortURL string) (string, bool) {
 	return url, ok
 }
 
+func (s ShortenedURLS) GetAll() []URLInfo {
+	totalEntry := len(s)
+	entries := make([]URLInfo, totalEntry)
+	index := 0
+	for shortAddress, url := range s {
+		entries[index] = URLInfo{URL: url, ShortAddress: shortAddress}
+		index++
+	}
+	return entries
+}
+
 func (s ShortenedURLS) IsExists(shortURL string) bool {
 	_, ok := s.Get(shortURL)
 	return ok
@@ -55,4 +71,8 @@ func (s ShortenedURLS) SearchURL(url string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func (u URLInfo) FormatURL() string {
+	return fmt.Sprintf("http://localhost:8000/%s", u.ShortAddress)
 }

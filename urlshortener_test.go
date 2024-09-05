@@ -12,23 +12,6 @@ import (
 )
 
 func TestURLShortenerEndpoint(t *testing.T) {
-	t.Run("/ returns the correct string", func(t *testing.T) {
-		handler := urlshortener.HomeHandler()
-
-		want := "Hello World"
-
-		request := httptest.NewRequest(http.MethodGet, "/", nil)
-		response := httptest.NewRecorder()
-
-		handler.ServeHTTP(response, request)
-
-		got := response.Body.String()
-
-		if got != want {
-			t.Errorf("want %q, got %q", want, got)
-		}
-	})
-
 	t.Run("/api/vi/shorten returns the right response", func(t *testing.T) {
 		url := "https://pkg.go.dev/net/http/httptest#NewRequest"
 		address, err := shortenAddress(url, urlshortener.GenerateShortString)

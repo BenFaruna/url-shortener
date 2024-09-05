@@ -11,9 +11,15 @@ import (
 // HomeHandler accept requests to the home route and provide responses are redirection for short routes
 func HomeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		renderer, err := NewIndexRenderer()
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError)
+		}
 		switch r.URL.Path {
 		case "/":
-			fmt.Fprint(w, "Hello World")
+			data := db.GetAll()
+			renderer.Render(w, data)
+			// fmt.Fprint(w, "Hello World")
 			return
 		default:
 			shortID := strings.TrimPrefix(r.URL.Path, "/")
