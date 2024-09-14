@@ -2,29 +2,23 @@ package main
 
 import (
 	"net/http"
-)
 
-var db ShortenedURLS = make(ShortenedURLS)
+	"github.com/BenFaruna/url-shortener/internal/controller"
+)
 
 func main() {
 	mux := http.NewServeMux()
 
-	mux.Handle("/", HomeHandler())
+	mux.Handle("/", controller.HomeHandler())
 	mux.Handle("/api/v1/", APIMux())
-	// mux.Handle("/static/", StaticMux())
-	styles := http.FileServer(http.Dir("./static/css/"))
+
+	styles := http.FileServer(http.Dir("./internal/controller/static/css/"))
 	mux.Handle("/styles/", http.StripPrefix("/styles/", styles))
 
-	script := http.FileServer(http.Dir("./static/js/"))
+	script := http.FileServer(http.Dir("./internal/controller/static/js/"))
 	mux.Handle("/scripts/", http.StripPrefix("/scripts/", script))
 
-	styles := http.FileServer(http.Dir("./static/css/"))
-	mux.Handle("/styles/", http.StripPrefix("/styles/", styles))
-
-	script := http.FileServer(http.Dir("./static/js/"))
-	mux.Handle("/scripts/", http.StripPrefix("/scripts/", script))
-
-	if err := http.ListenAndServe(":8000", IncomingRequest(mux)); err != nil {
+	if err := http.ListenAndServe(":8000", controller.IncomingRequest(mux)); err != nil {
 		panic(err)
 	}
 }
@@ -32,8 +26,8 @@ func main() {
 func APIMux() http.Handler {
 	shortenerMux := http.NewServeMux()
 
-	shortenerMux.Handle("/shorten", ShortenHandler(GenerateShortString))
-	shortenerMux.Handle("/address/", GetFullAddressHandler())
+	shortenerMux.Handle("/shorten", controller.ShortenHandler(controller.GenerateShortString))
+	shortenerMux.Handle("/address/", controller.GetFullAddressHandler())
 
 	return http.StripPrefix("/api/v1", shortenerMux)
 }

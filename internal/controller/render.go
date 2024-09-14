@@ -1,9 +1,11 @@
-package main
+package controller
 
 import (
 	"embed"
 	"html/template"
 	"io"
+
+	"github.com/BenFaruna/url-shortener/internal/model"
 )
 
 var (
@@ -24,7 +26,7 @@ func NewIndexRenderer() (*IndexRenderer, error) {
 	return &IndexRenderer{templ: templ}, nil
 }
 
-func (r *IndexRenderer) Render(w io.Writer, data []URLInfo) error {
+func (r *IndexRenderer) Render(w io.Writer, data []model.URLInfo) error {
 	if err := r.templ.ExecuteTemplate(w, "index.gohtml", data); err != nil {
 		return err
 	}

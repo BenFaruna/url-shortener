@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/styles/main.css">
+  <title>BenFaruna URL shortener</title>
+</head>
+
+<body>
+  <main class="container">
+    <h1>URL Shortener</h1>
+
+    <div>
+      <form id="input-form">
+        <input type="text" name="url" placeholder="Enter url..." />
+        <input type="submit">
+      </form>
+    </div>
+    <div>
+      <table>
+        <thead>
+          <tr>
+            <td>URL</td>
+            <td>Short Address</td>
+          </tr>
+          <thead>
+          <tbody>
+            <tr>
+              <td>https://google.com</td>
+              <td><a href=/wxYabC target="_blank">wxYabC</a></td>
+            </tr>
+            <tr>
+              <td>https://faceboox.com</td>
+              <td><a href=/sFXZul target="_blank">sFXZul</a></td>
+            </tr>
+            <tr>
+              <td>https://go.dev</td>
+              <td><a href=/YaCChm target="_blank">YaCChm</a></td>
+            </tr>
+          </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="text/javascript" src="/scripts/main.js"></script>
+
+  <script>
+    const form = document.getElementById("input-form")
+    form.addEventListener("submit", submitForm)
+  </script>
+</body>
+
+</html>

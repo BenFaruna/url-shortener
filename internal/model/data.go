@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"errors"
@@ -23,7 +23,9 @@ type ShortenedURLS map[string]string
 var ErrorEmptyString = errors.New("cannot add empty string to db")
 var ErrorDuplicateShortString = errors.New("duplicate short string entry")
 
-var characters string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+var Characters string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+var Db ShortenedURLS = make(ShortenedURLS)
 
 func (s ShortenedURLS) Add(url, shortLink string) (string, error) {
 	if url == "" || shortLink == "" {

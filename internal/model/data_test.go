@@ -1,23 +1,24 @@
-package main_test
+package model_test
 
 import (
 	"fmt"
 	"slices"
 	"testing"
 
-	URLshortener "github.com/BenFaruna/url-shortener"
+	"github.com/BenFaruna/url-shortener/internal/controller"
+	"github.com/BenFaruna/url-shortener/internal/model"
 )
 
-var cases = []URLshortener.URLInfo{
-	{URL: "https://google.com", ShortAddress: URLshortener.GenerateShortString()},
-	{URL: "https://facebook.com", ShortAddress: URLshortener.GenerateShortString()},
-	{URL: "https://x.com", ShortAddress: URLshortener.GenerateShortString()},
-	{URL: "https://reddit.com", ShortAddress: URLshortener.GenerateShortString()},
+var cases = []model.URLInfo{
+	{URL: "https://google.com", ShortAddress: controller.GenerateShortString()},
+	{URL: "https://facebook.com", ShortAddress: controller.GenerateShortString()},
+	{URL: "https://x.com", ShortAddress: controller.GenerateShortString()},
+	{URL: "https://reddit.com", ShortAddress: controller.GenerateShortString()},
 }
 
 func TestDBAdd(t *testing.T) {
 
-	db := make(URLshortener.ShortenedURLS)
+	db := make(model.ShortenedURLS)
 
 	t.Run("empty string returns an error", func(t *testing.T) {
 		_, err := db.Add("", "")
@@ -46,7 +47,7 @@ func TestDBAdd(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(fmt.Sprintf("adding duplicate URL returns previous short string - %q", test.URL), func(t *testing.T) {
-			got, err := db.Add(test.URL, URLshortener.GenerateShortString())
+			got, err := db.Add(test.URL, controller.GenerateShortString())
 			handleError(t, err)
 
 			if got != test.ShortAddress {
@@ -58,7 +59,7 @@ func TestDBAdd(t *testing.T) {
 }
 
 func TestDBGet(t *testing.T) {
-	db := make(URLshortener.ShortenedURLS)
+	db := make(model.ShortenedURLS)
 
 	t.Run("db.Get returns correct result", func(t *testing.T) {
 		for _, test := range cases {
@@ -84,7 +85,7 @@ func TestDBGet(t *testing.T) {
 }
 
 func TestDBGetAll(t *testing.T) {
-	db := make(URLshortener.ShortenedURLS)
+	db := make(model.ShortenedURLS)
 
 	for _, entry := range cases {
 		t.Log(entry)
@@ -103,7 +104,7 @@ func TestDBGetAll(t *testing.T) {
 }
 
 func TestDBSearchURL(t *testing.T) {
-	db := make(URLshortener.ShortenedURLS)
+	db := make(model.ShortenedURLS)
 	for _, entry := range cases[:2] {
 		_, err := db.Add(entry.URL, entry.ShortAddress)
 		handleError(t, err)
@@ -135,5 +136,12 @@ func TestDBSearchURL(t *testing.T) {
 				t.Errorf("expected %q, got %q", entry.ShortAddress, ShortAddress)
 			}
 		})
+	}
+}
+
+func handleError(t testing.TB, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
