@@ -9,8 +9,7 @@ import (
 )
 
 var (
-	//go:embed "templates/*"
-	indexTemplate embed.FS
+	IndexTemplate embed.FS
 )
 
 type IndexRenderer struct {
@@ -18,7 +17,7 @@ type IndexRenderer struct {
 }
 
 func NewIndexRenderer() (*IndexRenderer, error) {
-	templ, err := template.ParseFS(indexTemplate, "templates/*.gohtml")
+	templ, err := template.ParseFS(IndexTemplate, "templates/*.gohtml")
 
 	if err != nil {
 		return nil, err

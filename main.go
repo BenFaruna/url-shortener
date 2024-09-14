@@ -1,21 +1,28 @@
 package main
 
 import (
+	"embed"
 	"net/http"
 
 	"github.com/BenFaruna/url-shortener/internal/controller"
 )
 
+var (
+	//go:embed "templates/*"
+	indexTemplate embed.FS
+)
+
 func main() {
+	controller.IndexTemplate = indexTemplate
 	mux := http.NewServeMux()
 
 	mux.Handle("/", controller.HomeHandler())
 	mux.Handle("/api/v1/", APIMux())
 
-	styles := http.FileServer(http.Dir("./internal/controller/static/css/"))
+	styles := http.FileServer(http.Dir("./static/css/"))
 	mux.Handle("/styles/", http.StripPrefix("/styles/", styles))
 
-	script := http.FileServer(http.Dir("./internal/controller/static/js/"))
+	script := http.FileServer(http.Dir("./static/js/"))
 	mux.Handle("/scripts/", http.StripPrefix("/scripts/", script))
 
 	if err := http.ListenAndServe(":8000", controller.IncomingRequest(mux)); err != nil {
