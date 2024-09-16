@@ -1,19 +1,12 @@
 package main
 
 import (
-	"embed"
 	"net/http"
 
 	"github.com/BenFaruna/url-shortener/internal/controller"
 )
 
-var (
-	//go:embed "templates/*"
-	indexTemplate embed.FS
-)
-
 func main() {
-	controller.IndexTemplate = indexTemplate
 	mux := http.NewServeMux()
 
 	mux.Handle("/", controller.HomeHandler())

@@ -32,19 +32,11 @@
               <td>Short Address</td>
             </tr>
             <thead>
-            <tbody>
+            <tbody>{{range .}}
               <tr>
-                <td>https://google.com</td>
-                <td><a href=/wxYabC target="_blank">wxYabC</a></td>
-              </tr>
-              <tr>
-                <td>https://faceboox.com</td>
-                <td><a href=/sFXZul target="_blank">sFXZul</a></td>
-              </tr>
-              <tr>
-                <td>https://go.dev</td>
-                <td><a href=/YaCChm target="_blank">YaCChm</a></td>
-              </tr>
+                <td>{{.URL}}</td>
+                <td><a href=/{{.ShortAddress}} target="_blank">{{.ShortAddress}}</a></td>
+              </tr>{{end}}
             </tbody>
         </table>
       </div>

@@ -3,12 +3,22 @@
 }
 
 body {
-    background-color: rgb(222, 209, 197);
+    background-color: rgb(222, 209, 197) !important;
 }
 
 .container {
     max-width: 75%;
-    margin: auto
+    margin: auto;
+}
+
+.content {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
 }
 
 form {
@@ -16,6 +26,7 @@ form {
 }
 
 table {
+    max-width: 75%;
     margin-top: 20;
     list-style: none;
 }
