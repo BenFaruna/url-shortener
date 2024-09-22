@@ -13,21 +13,28 @@ var (
 	indexTemplate embed.FS
 )
 
-type IndexRenderer struct {
+type Renderer struct {
 	templ *template.Template
 }
 
-func NewIndexRenderer() (*IndexRenderer, error) {
+func NewRenderer() (*Renderer, error) {
 	templ, err := template.ParseFS(indexTemplate, "templates/*.gohtml")
 
 	if err != nil {
 		return nil, err
 	}
-	return &IndexRenderer{templ: templ}, nil
+	return &Renderer{templ: templ}, nil
 }
 
-func (r *IndexRenderer) Render(w io.Writer, data []model.URLInfo) error {
-	if err := r.templ.ExecuteTemplate(w, "index.gohtml", data); err != nil {
+func (r *Renderer) RenderData(w io.Writer, filename string, data []model.URLInfo) error {
+	if err := r.templ.ExecuteTemplate(w, filename, data); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Renderer) Render(w io.Writer, filename string, data interface{}) error {
+	if err := r.templ.ExecuteTemplate(w, filename, data); err != nil {
 		return err
 	}
 	return nil

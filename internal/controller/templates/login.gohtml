@@ -1,0 +1,15 @@
+{{template "header" .}}
+<form method="post" action="/login">
+    <input type="text" name="token" value={{.Token}} hidden>
+    <div class="input-group mb-3 w-25">
+        <span class="input-group-text" id="basic-addon1">@</span>
+        <input type="text" class="form-control" name="username" placeholder="Username" aria-label="Username"
+            aria-describedby="basic-addon1" required>
+    </div>
+    <div class="input-group mb-3 w-25">
+        <input type="password" class="form-control" name="password" placeholder="Password" aria-label="Password"
+            aria-describedby="basic-addon1" required>
+    </div>
+    <button type="submit" class="btn btn-success">Signin</button>
+</form>
+{{template "footer" .}}

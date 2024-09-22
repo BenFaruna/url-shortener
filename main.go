@@ -19,6 +19,10 @@ func main() {
 	mux.Handle("/", controller.HomeHandler())
 	mux.Handle("/api/v1/", APIMux())
 
+	// authentication handler
+	mux.Handle("/login", controller.LoginHandler())
+	mux.Handle("/signup", controller.SignupHandler())
+
 	styles := http.FileServer(http.Dir("./static/css/"))
 	mux.Handle("/styles/", http.StripPrefix("/styles/", styles))
 

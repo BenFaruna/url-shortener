@@ -88,7 +88,6 @@ func TestDBGetAll(t *testing.T) {
 	db := make(model.ShortenedURLS)
 
 	for _, entry := range cases {
-		t.Log(entry)
 		_, err := db.Add(entry.URL, entry.ShortAddress)
 		handleError(t, err)
 	}

@@ -20,10 +20,10 @@ var (
 func TestIndexRender(t *testing.T) {
 	buf := bytes.Buffer{}
 
-	indexRenderer, err := controller.NewIndexRenderer()
+	indexRenderer, err := controller.NewRenderer()
 	handleError(t, err)
 
-	indexRenderer.Render(&buf, entries)
+	indexRenderer.RenderData(&buf, "index.gohtml", entries)
 
 	approval.VerifyString(t, buf.String())
 }
