@@ -13,7 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BenFaruna/url-shortener/internal/database"
 	"github.com/BenFaruna/url-shortener/internal/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type FormToken struct {
@@ -174,6 +176,18 @@ func SignupHandler() http.Handler {
 				return
 			}
 
+			password, err := generatePasswordHash(password)
+			if err != nil {
+				errorHandler(w, r, http.StatusBadRequest, "invalid password")
+				return
+			}
+
+			user := database.User{Username: username, Password: password}
+			if err := user.Add(); err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, "User not added")
+				return
+			}
+
 			// TODO: ensure username is unique and add entry to database
 			http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
 			return
@@ -191,6 +205,14 @@ func validatePassword(s string) bool {
 	match, _ := regexp.MatchString("^[A-z0-9_!@#$_%^&*.?()-=+ ]*$", s)
 	// fmt.Println("password", match)
 	return match
+}
+
+func generatePasswordHash(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		return "", fmt.Errorf("invalid password")
+	}
+	return string(hashedPassword), nil
 }
 
 func errorHandler(w http.ResponseWriter, _ *http.Request, status int, errorMessage string) {

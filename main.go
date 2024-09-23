@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/BenFaruna/url-shortener/internal/controller"
+	_ "github.com/BenFaruna/url-shortener/internal/database"
 	"github.com/BenFaruna/url-shortener/internal/session"
 	_ "github.com/BenFaruna/url-shortener/internal/session/providers/memory"
 )
