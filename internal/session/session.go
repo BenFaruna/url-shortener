@@ -34,7 +34,7 @@ type Session interface {
 
 var provides = make(map[string]Provider)
 
-// var GlobalSession *Manager
+var GlobalSession *Manager
 
 func NewManager(provideName, cookieName string, maxlifetime int64) (*Manager, error) {
 	provider, ok := provides[provideName]
@@ -81,7 +81,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 	return
 }
 
-// Destroy sessionid
+// SessionDestroy sessionid
 func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(manager.cookieName)
 	if err != nil || cookie.Value == "" {
@@ -89,7 +89,7 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) {
 	} else {
 		manager.lock.Lock()
 		defer manager.lock.Unlock()
-		manager.provider.SessionDestroy(cookie.Value)
+		_ = manager.provider.SessionDestroy(cookie.Value)
 		expiration := time.Now()
 		cookie := http.Cookie{Name: manager.cookieName, Path: "/", HttpOnly: true, Expires: expiration, MaxAge: -1}
 		http.SetCookie(w, &cookie)

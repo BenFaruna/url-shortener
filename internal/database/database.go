@@ -14,9 +14,16 @@ type User struct {
 	Username, Password, SessionID string
 }
 
-func (u *User) Get(uid int64) {
+func (u *User) Get(uid int64) error {
 	row := DB.QueryRow("SELECT * FROM users WHERE uid=?", uid)
-	row.Scan(&u.ID, &u.Username, &u.Password, &u.SessionID)
+	err := row.Scan(&u.ID, &u.Username, &u.Password, &u.SessionID)
+	return err
+}
+
+func (u *User) GetUserInfo(username string) error {
+	row := DB.QueryRow("SELECT * FROM users WHERE username=?", username)
+	err := row.Scan(&u.ID, &u.Username, &u.Password)
+	return err
 }
 
 func (u *User) Add() error {
@@ -39,7 +46,21 @@ func init() {
 
 	err = db.Ping()
 	errorPanic(err)
-	db.Exec("CREATE TABLE users (uid integer PRIMARY KEY AUTOINCREMENT, username string, password string, sessionid string);")
+	db.Exec(`
+CREATE TABLE "users" (
+	"id"	INTEGER NOT NULL,
+	"username"	string NOT NULL UNIQUE,
+	"password"	string NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+CREATE TABLE "shorturls" (
+	"id" INTEGER NOT NULL,
+	"url" string NOT NULL,
+	"short_string" string NOT NULL,
+	"user_id" INTEGER,
+	FOREIGN KEY ("user_id") REFERENCES users("id")
+);`)
 }
 
 func errorPanic(err error) {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -49,11 +50,11 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		defer server.Close()
 
 		// first short string entry
-		json.NewEncoder(buf).Encode(model.Body{URL: url})
-		http.Post(server.URL+"/shorten", "application/json", buf)
+		_ = json.NewEncoder(buf).Encode(model.Body{URL: url})
+		_, _ = http.Post(server.URL+"/shorten", "application/json", buf)
 
 		// duplicate short string request
-		json.NewEncoder(buf).Encode(model.Body{URL: url})
+		_ = json.NewEncoder(buf).Encode(model.Body{URL: url})
 		response, err := http.Post(server.URL+"/shorten", "application/json", buf)
 		handleError(t, err)
 
@@ -82,7 +83,7 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
 
-		json.NewDecoder(response.Body).Decode(&output)
+		_ = json.NewDecoder(response.Body).Decode(&output)
 
 		if output.Data != url {
 			t.Errorf("expected %q, got %q", url, output.Data)
@@ -112,6 +113,10 @@ func TestURLShortenerEndpoint(t *testing.T) {
 			t.Errorf("expected %q, got %q", url, loc)
 		}
 	})
+
+	t.Cleanup(func() {
+		os.RemoveAll("app.db")
+	})
 }
 
 func shortenAddress(url string, shortStringGenerator func() string) (string, error) {
@@ -120,7 +125,7 @@ func shortenAddress(url string, shortStringGenerator func() string) (string, err
 	if err != nil {
 		return "", err
 	}
-	buf.WriteString(string(data))
+	buf.Write(data)
 
 	var output model.StatusMessage
 
@@ -133,7 +138,7 @@ func shortenAddress(url string, shortStringGenerator func() string) (string, err
 	response := httptest.NewRecorder()
 
 	handler.ServeHTTP(response, request)
-	json.Unmarshal(response.Body.Bytes(), &output)
+	_ = json.Unmarshal(response.Body.Bytes(), &output)
 	return output.Data, nil
 }
 

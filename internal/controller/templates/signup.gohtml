@@ -1,15 +1,52 @@
 {{template "header" .}}
-<form method="post" action="/signup">
-    <input type="text" name="token" value={{.Token}} hidden>
+<form id="signup-form">
+    <input type="text" id="token" name="token" value={{.Token}} hidden>
     <div class="input-group mb-3 w-25">
         <span class="input-group-text" id="basic-addon1">@</span>
-        <input type="text" class="form-control" name="username" placeholder="Username" aria-label="Username"
+        <input type="text" class="form-control" id="username" name="username" placeholder="Username" aria-label="Username"
             aria-describedby="basic-addon1" required>
     </div>
     <div class="input-group mb-3 w-25">
-        <input type="password" class="form-control" name="password" placeholder="Password" aria-label="Password"
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password" aria-label="Password"
             aria-describedby="basic-addon1" required>
     </div>
     <button type="submit" class="btn btn-success">Signup</button>
 </form>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+    function formSubmit(e) {
+        e.preventDefault();
+        const data = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+        }
+
+        fetch('/api/v1/signup', {
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8',
+            },
+            method: 'POST',
+            body: JSON.stringify(data),
+        }).then(async res => {
+            if (res.ok) {
+                setTimeout(location.assign.bind(location, "/"), 3000);
+                Toastify({
+                    text: "Signup complete",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top", // `top` or `bottom`
+                    position: "right", // `left`, `center` or `right`
+                    stopOnFocus: false, // Prevents dismissing of toast on hover
+                }).showToast();
+            } else {
+                const resp = await res.json();
+                alert(resp.message);
+            }
+        })
+    }
+
+    const form = document.getElementById('signup-form');
+    form.addEventListener('submit', formSubmit);
+</script>
 {{template "footer" .}}

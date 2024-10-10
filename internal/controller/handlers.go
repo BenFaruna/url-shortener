@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	_ "github.com/BenFaruna/url-shortener/internal/session/providers/memory"
 	"html/template"
 	"io"
 	"math/rand"
@@ -15,12 +16,26 @@ import (
 
 	"github.com/BenFaruna/url-shortener/internal/database"
 	"github.com/BenFaruna/url-shortener/internal/model"
+	"github.com/BenFaruna/url-shortener/internal/session"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type FormToken struct {
 	Token string
 }
+
+type UserInfo struct {
+	ID       int64
+	Username string
+}
+
+type AuthFormInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Token    string `json:"token,omitempty"`
+}
+
+var GlobalSessions *session.Manager
 
 // HomeHandler accept requests to the home route and provide responses are redirection for short routes
 func HomeHandler() http.HandlerFunc {
@@ -123,8 +138,8 @@ func LoginHandler() http.Handler {
 			username := template.HTMLEscapeString(r.Form.Get("username"))
 			password := template.HTMLEscapeString(r.Form.Get("password"))
 
-			fmt.Println("Username", username)
-			fmt.Println("Password", password)
+			//fmt.Println("Username", username)
+			//fmt.Println("Password", password)
 
 			if !validateUsername(username) {
 				errorHandler(w, r, http.StatusBadRequest, "invalid username")
@@ -135,8 +150,22 @@ func LoginHandler() http.Handler {
 				return
 			}
 			// TODO: check password before login
+			u := &database.User{}
+			err = u.GetUserInfo(username)
+			if err != nil {
+				handleFailedPostRequest(w, r, "login.gohtml")
+				return
+			}
+			if !checkPassword(password, u.Password) {
+				handleFailedPostRequest(w, r, "login.gohtml")
+				return
+			}
+			userInfo := UserInfo{ID: u.ID, Username: u.Username}
+			if err = registerUserSession(w, r, userInfo); err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, "Session error")
+				return
+			}
 			http.Redirect(w, r, "/", http.StatusPermanentRedirect)
-
 		} else {
 			errorHandler(w, r, http.StatusMethodNotAllowed, fmt.Sprintf("%s method not allowed", r.Method))
 		}
@@ -161,10 +190,9 @@ func SignupHandler() http.Handler {
 		} else if r.Method == http.MethodPost {
 			r.ParseForm()
 
-			if token := r.Form.Get("token"); token != "" {
+			// TODO: Add token validation
+			if token := r.Form.Get("token"); token == "" {
 				// fmt.Println("Token", token)
-			} else {
-				http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 				return
 			}
 
@@ -183,12 +211,18 @@ func SignupHandler() http.Handler {
 			}
 
 			user := database.User{Username: username, Password: password}
-			if err := user.Add(); err != nil {
+			err = user.Add()
+			if err != nil {
 				errorHandler(w, r, http.StatusInternalServerError, "User not added")
 				return
 			}
+			userInfo := UserInfo{ID: user.ID, Username: user.Username}
+			err = registerUserSession(w, r, userInfo)
+			if err != nil {
+				errorHandler(w, r, http.StatusInternalServerError, "Session error")
+				return
+			}
 
-			// TODO: ensure username is unique and add entry to database
 			http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
 			return
 		}
@@ -207,6 +241,14 @@ func validatePassword(s string) bool {
 	return match
 }
 
+func checkPassword(password string, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func generatePasswordHash(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
@@ -223,6 +265,18 @@ func errorHandler(w http.ResponseWriter, _ *http.Request, status int, errorMessa
 	}
 }
 
+func handleFailedPostRequest(w http.ResponseWriter, r *http.Request, filename string) {
+	// ... error handling ...
+	renderer, err := NewRenderer()
+	if err != nil {
+		errorHandler(w, r, http.StatusInternalServerError, "")
+		return
+	}
+	if err = renderer.Render(w, filename, nil); err != nil {
+		errorHandler(w, r, http.StatusInternalServerError, "")
+	}
+}
+
 func GenerateShortString() string {
 	output := ""
 
@@ -232,4 +286,21 @@ func GenerateShortString() string {
 	}
 
 	return output
+}
+
+func registerUserSession(w http.ResponseWriter, r *http.Request, u UserInfo) error {
+	sess := GlobalSessions.SessionStart(w, r)
+	if err := sess.Set("user", u); err != nil {
+		return fmt.Errorf("registerUserSession: unable to register session\n%v", err)
+	}
+	if err := sess.Set("accesstime", time.Now().Unix()); err != nil {
+		return fmt.Errorf("registerUserSession: unable to register session\n%v", err)
+	}
+	return nil
+}
+
+func init() {
+	session.GlobalSession, _ = session.NewManager("memory", "gosessionid", 3600)
+	GlobalSessions = session.GlobalSession
+	go session.GlobalSession.GC()
 }

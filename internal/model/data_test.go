@@ -2,6 +2,7 @@ package model_test
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"testing"
 
@@ -136,6 +137,10 @@ func TestDBSearchURL(t *testing.T) {
 			}
 		})
 	}
+
+	t.Cleanup(func() {
+		os.RemoveAll("app.db")
+	})
 }
 
 func handleError(t testing.TB, err error) {
