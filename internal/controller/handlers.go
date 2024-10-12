@@ -20,6 +20,11 @@ type FormToken struct {
 	Token string
 }
 
+type FormPageData struct {
+	FormToken
+	User UserInfo
+}
+
 type UserInfo struct {
 	ID       int64
 	Username string
@@ -42,7 +47,12 @@ func HomeHandler() http.HandlerFunc {
 		}
 		switch r.URL.Path {
 		case "/":
-			data := model.Db.GetAll()
+			data := &struct {
+				URLs []model.URLInfo
+				User UserInfo
+			}{}
+			data.URLs = model.Db.GetAll()
+			data.User = getUserSignedIn(w, r)
 			renderer.Render(w, "index.gohtml", data)
 			return
 		default:
@@ -87,7 +97,6 @@ func ShortenHandler(shortStringFunc func() string) http.Handler {
 }
 
 func GetFullAddressHandler() http.Handler {
-
 	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shortAddress := strings.TrimPrefix(r.URL.Path, "/address/")
 
@@ -110,12 +119,14 @@ func LoginHandler() http.Handler {
 		renderer, err := NewRenderer()
 		if err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "")
+			return
 		}
+
 		curtime := time.Now().Unix()
 		h := md5.New()
 		io.WriteString(h, strconv.FormatInt(curtime, 10))
 		token := fmt.Sprintf("%x", h.Sum(nil))
-		if err = renderer.Render(w, "login.gohtml", FormToken{token}); err != nil {
+		if err = renderer.Render(w, "login.gohtml", FormPageData{FormToken: FormToken{token}}); err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "")
 			return
 		}
@@ -127,13 +138,14 @@ func SignupHandler() http.Handler {
 		renderer, err := NewRenderer()
 		if err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "")
+			return
 		}
 		curtime := time.Now().Unix()
 		h := md5.New()
 		io.WriteString(h, strconv.FormatInt(curtime, 10))
 		token := fmt.Sprintf("%x", h.Sum(nil))
 
-		if err = renderer.Render(w, "signup.gohtml", FormToken{token}); err != nil {
+		if err = renderer.Render(w, "signup.gohtml", FormPageData{FormToken: FormToken{token}}); err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "")
 			return
 		}
@@ -141,11 +153,20 @@ func SignupHandler() http.Handler {
 }
 
 func errorHandler(w http.ResponseWriter, _ *http.Request, status int, errorMessage string) {
-	w.WriteHeader(status)
+	//w.WriteHeader(status)
 	// w.Header().Set("Content-Type", "application/json")
 	if status == http.StatusNotFound {
 		fmt.Fprint(w, errorMessage)
 	}
+}
+
+func getUserSignedIn(w http.ResponseWriter, r *http.Request) UserInfo {
+	sess := GlobalSessions.SessionStart(w, r)
+	user := sess.Get("user")
+	if user == nil {
+		return UserInfo{}
+	}
+	return user.(UserInfo)
 }
 
 func GenerateShortString() string {

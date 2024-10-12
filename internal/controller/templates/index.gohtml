@@ -1,8 +1,8 @@
 {{template "header" .}}
 <div class=content>
-  <div class="col-auto">
-    <form id="input-form">
-      <div class="col-auto" style="width:70%">
+  <div class="col-auto py-2 w-100">
+    <form id="input-form" class="w-100">
+      <div class="col-auto">
         <input class="form-control form-control-lg" type="text" name="url" placeholder="Enter url..."
           aria-label=".form-control-lg">
       </div>
@@ -11,22 +11,24 @@
       </div>
     </form>
   </div>
-  <div>
-    <table>
+  {{ if not .URLs}}
+  <h5>No short url...</h5>
+  {{else}}
+  <table>
+    <thead>
+      <tr>
+        <td>URL</td>
+        <td>Short Address</td>
+      </tr>
       <thead>
+      <tbody>{{range .URLs}}
         <tr>
-          <td>URL</td>
-          <td>Short Address</td>
-        </tr>
-        <thead>
-        <tbody>{{range .}}
-          <tr>
-            <td>{{.URL}}</td>
-            <td><a href=/{{.ShortAddress}} target="_blank">{{.ShortAddress}}</a></td>
-          </tr>{{end}}
-        </tbody>
-    </table>
-  </div>
+          <td class="long-url">{{.URL}}</td>
+          <td class="short-url"><a href=/{{.ShortAddress}} target="_blank">{{.ShortAddress}}</a></td>
+        </tr>{{end}}
+      </tbody>
+  </table>
+  {{end}}
 </div>
 
 <script type="text/javascript" src="/scripts/main.js"></script>

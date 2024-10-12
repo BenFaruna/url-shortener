@@ -1,8 +1,28 @@
 {{define "footer"}}
-</main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
   integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+<script>
+    function signOut(event) {
+        event.preventDefault();
+
+        fetch('/api/v1/signout', {
+            method: 'POST'
+        }).then(async res => {
+            const notyf = new Notyf({duration:2000, dismissible: true, position:{y:'top', x:'right'}});
+            const resp = await res.json();
+            if (res.ok) {
+                notyf.success(resp.message);
+                setTimeout(location.assign.bind(location, "/"), 2100);
+            } else {
+                notyf.error(resp.message);
+            }
+        })
+    }
+
+    const signOutButton = document.getElementById('sign-out-button');
+    signOutButton.addEventListener('click', signOut)
+</script>
 </body>
 
 </html>

@@ -1,4 +1,5 @@
 {{template "header" .}}
+<h3>Signup</h3>
 <form id="signup-form">
     <input type="text" id="token" name="token" value={{.Token}} hidden>
     <div class="input-group mb-3 w-25">
@@ -27,10 +28,10 @@
                 'Content-Type': 'application/json',
             }
         }).then(async res => {
-            const notyf = new Notyf({duration:3000, dismissible: true, position:{y:'top', x:'right'}});
+            const notyf = new Notyf({duration:2000, dismissible: true, position:{y:'top', x:'right'}});
             const resp = await res.json();
             if (res.ok) {
-                setTimeout(location.assign.bind(location, "/login"), 3000);
+                setTimeout(location.assign.bind(location, "/login"), 2100);
                 notyf.success(resp.message);
             } else {
                 notyf.error(resp.message);

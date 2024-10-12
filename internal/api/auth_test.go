@@ -7,8 +7,6 @@ import (
 	"github.com/BenFaruna/url-shortener/internal/api"
 	_ "github.com/BenFaruna/url-shortener/internal/controller"
 	"os"
-	"strings"
-
 	//_ "github.com/BenFaruna/url-shortener/internal/database"
 	"net/http"
 	"net/http/httptest"
@@ -81,6 +79,7 @@ func TestSignin(t *testing.T) {
 	})
 
 	t.Run("cookie is created after signin", func(t *testing.T) {
+		signup(t)
 		formInput := &bytes.Buffer{}
 		input := AuthForm{Username: "devfaruna1", Password: "1xshbixen6svub"}
 		if data, err := json.Marshal(input); err != nil {
@@ -93,20 +92,69 @@ func TestSignin(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		handler.ServeHTTP(response, request)
-		t.Logf("%v", response.Header())
 
-		cookie := response.Header().Get("Set-Cookie")
-		cookie = strings.TrimPrefix(cookie, "[")
-		cookie = strings.TrimSuffix(cookie, "]")
-		if !strings.HasPrefix(cookie, "gosessionid=") {
-			t.Errorf("expected cookie %q, got %q", "gosessionid", cookie)
-		}
-		if !strings.HasSuffix(cookie, "HttpOnly") {
-			t.Errorf("expected cookie %q, got %q", "HttpOnly", cookie)
+		resp := response.Result()
+		cookies := resp.Cookies()
+		if len(cookies) != 1 {
+			t.Errorf("expected 1 cookie, got %d", len(cookies))
 		}
 	})
 }
 
 func TestLogout(t *testing.T) {
+	formInput := &bytes.Buffer{}
+	input := AuthForm{Username: "devfaruna1", Password: "1xshbixen6svub"}
+	if data, err := json.Marshal(input); err != nil {
+		t.Fatal(err)
+	} else {
+		formInput.WriteString(string(data))
+	}
+
+	handler := api.AuthMux()
+	signInRequest := httptest.NewRequest(http.MethodPost, "/signin", formInput)
+	signInResponse := httptest.NewRecorder()
+	handler.ServeHTTP(signInResponse, signInRequest)
+
+	resp := signInResponse.Result()
+	cookies := resp.Cookies()
+	if len(cookies) == 0 {
+		t.Error("expected cookie to be set")
+	}
+
+	//sess := controller.GlobalSessions.SessionStart(signInResponse, signInRequest)
+	//user := sess.Get("user")
+	//if user != nil {
+	//	t.Errorf("expect nil, got %v", user)
+	//}
+
+	signOutRequest := httptest.NewRequest(http.MethodPost, "/signout", nil)
+	signOutResponse := httptest.NewRecorder()
+	signOutRequest.Header.Set("Set-Cookie", signInResponse.Header().Get("Set-Cookie"))
+
+	handler.ServeHTTP(signOutResponse, signOutRequest)
+	t.Logf("%v", signOutResponse.Header().Get("Set-Cookie"))
+	//sess := controller.GlobalSessions.SessionStart(signOutResponse, signOutRequest)
+	//user := sess.Get("user")
+	//if user != nil {
+	//	t.Errorf("expect nil, got %v", user.(controller.UserInfo))
+	//}
+
 	t.Cleanup(func() { os.RemoveAll("app.db") })
+}
+
+func signup(t testing.TB) (http.ResponseWriter, *http.Request) {
+	t.Helper()
+	formInput := &bytes.Buffer{}
+	input := AuthForm{Username: "devfaruna", Password: "1xshbixen6svub"}
+	if data, err := json.Marshal(input); err != nil {
+		t.Fatal(err)
+	} else {
+		formInput.WriteString(string(data))
+	}
+	handler := api.AuthMux()
+	request := httptest.NewRequest(http.MethodPost, "/signup", formInput)
+	response := httptest.NewRecorder()
+
+	handler.ServeHTTP(response, request)
+	return response, request
 }

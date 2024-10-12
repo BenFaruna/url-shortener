@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/BenFaruna/url-shortener/internal/controller"
@@ -20,6 +21,7 @@ func AuthMux() http.Handler {
 	authMux := http.NewServeMux()
 	authMux.Handle("/signup", signup())
 	authMux.Handle("/signin", signin())
+	authMux.Handle("/signout", signout())
 
 	//return http.StripPrefix("/", authMux)
 	return authMux
@@ -107,11 +109,37 @@ func signin() http.Handler {
 			return
 		}
 
+		data := []byte(fmt.Sprintf("%s:%s", username, password))
+		dst := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+		base64.StdEncoding.Encode(dst, data)
+
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Authorization", fmt.Sprintf("Basic %s", string(dst)))
 		err = json.NewEncoder(w).Encode(&Response{StatusCode: http.StatusOK, Message: fmt.Sprintf("%q logged in", u.Username)})
 		if err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, fmt.Sprintf("Error writing response: %v", err))
+			return
+		}
+	}))
+}
+
+func signout() http.Handler {
+	return controller.Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := controller.GlobalSessions.SessionStart(w, r)
+		user := sess.Get("user")
+		if user == nil {
+			errorHandler(w, r, http.StatusUnauthorized, "user not authenticated")
+			return
+		}
+		if err := sess.Delete("user"); err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, "Session error")
+			return
+		}
+		controller.GlobalSessions.SessionDestroy(w, r)
+		resp := &Response{StatusCode: http.StatusOK, Message: fmt.Sprintf("%q logged out", user.(controller.UserInfo).Username)}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, "Error writing response")
 			return
 		}
 	}))

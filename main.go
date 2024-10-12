@@ -26,6 +26,9 @@ func main() {
 	mux.Handle("/login", controller.LoginHandler())
 	mux.Handle("/signup", controller.SignupHandler())
 
+	images := http.FileServer(http.Dir("./static/img"))
+	mux.Handle("/img/", http.StripPrefix("/img/", images))
+
 	styles := http.FileServer(http.Dir("./static/css/"))
 	mux.Handle("/styles/", http.StripPrefix("/styles/", styles))
 
