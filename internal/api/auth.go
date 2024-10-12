@@ -6,6 +6,7 @@ import (
 	"github.com/BenFaruna/url-shortener/internal/controller"
 	"github.com/BenFaruna/url-shortener/internal/database"
 	"golang.org/x/crypto/bcrypt"
+	"html"
 	"net/http"
 	"time"
 )
@@ -42,21 +43,24 @@ func signup() http.Handler {
 			return
 		}
 
-		password, err := generatePasswordHash(formInput.Password)
+		username := html.EscapeString(formInput.Username)
+		password := html.EscapeString(formInput.Password)
+
+		password, err = generatePasswordHash(password)
 		if err != nil {
 			errorHandler(w, r, http.StatusBadRequest, "invalid password")
 			return
 		}
 
-		user := database.User{Username: formInput.Username, Password: password}
+		user := database.User{Username: username, Password: password}
 		err = user.Add()
 		if err != nil {
 			errorHandler(w, r, http.StatusBadRequest, fmt.Sprintf("User not added: username already exists"))
 			return
 		}
-		userInfo := controller.UserInfo{ID: user.ID, Username: user.Username}
+		//userInfo := controller.UserInfo{ID: user.ID, Username: user.Username}
 		controller.GlobalSessions.SessionDestroy(w, r)
-		err = registerUserSession(w, r, userInfo)
+		//err = registerUserSession(w, r, userInfo)
 		if err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "Session error")
 			return
@@ -83,18 +87,21 @@ func signin() http.Handler {
 			return
 		}
 
+		username := html.EscapeString(formInput.Username)
+		password := html.EscapeString(formInput.Password)
+
 		u := &database.User{}
-		err = u.GetUserInfo(formInput.Username)
+		err = u.GetUserInfo(username)
 		if err != nil {
 			errorHandler(w, r, http.StatusBadRequest, "invalid username")
 			return
 		}
-		if err := comparePassword(u.Password, formInput.Password); err != nil {
+		if err := comparePassword(u.Password, password); err != nil {
 			errorHandler(w, r, http.StatusBadRequest, "invalid password")
 			return
 		}
 		userInfo := controller.UserInfo{ID: u.ID, Username: u.Username}
-		controller.GlobalSessions.SessionDestroy(w, r)
+		//controller.GlobalSessions.SessionDestroy(w, r)
 		if err := registerUserSession(w, r, userInfo); err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "Session error")
 			return

@@ -46,21 +46,22 @@ func init() {
 
 	err = db.Ping()
 	errorPanic(err)
-	db.Exec(`
-CREATE TABLE "users" (
+	_, err = db.Exec(`
+CREATE TABLE IF NOT EXISTS "users" (
 	"id"	INTEGER NOT NULL,
 	"username"	string NOT NULL UNIQUE,
 	"password"	string NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE "shorturls" (
+CREATE TABLE IF NOT EXISTS "shorturls" (
 	"id" INTEGER NOT NULL,
 	"url" string NOT NULL,
 	"short_string" string NOT NULL,
 	"user_id" INTEGER,
 	FOREIGN KEY ("user_id") REFERENCES users("id")
 );`)
+	errorPanic(err)
 }
 
 func errorPanic(err error) {

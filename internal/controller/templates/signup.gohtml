@@ -12,41 +12,33 @@
     </div>
     <button type="submit" class="btn btn-success">Signup</button>
 </form>
-
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-    function formSubmit(e) {
-        e.preventDefault();
+    function submitSignupForm(event) {
+        event.preventDefault();
         const data = {
             username: document.getElementById('username').value,
             password: document.getElementById('password').value,
         }
 
         fetch('/api/v1/signup', {
-            headers: {
-                'Content-Type': 'application/json;charset=utf-8',
-            },
             method: 'POST',
             body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json',
+            }
         }).then(async res => {
+            const notyf = new Notyf({duration:3000, dismissible: true, position:{y:'top', x:'right'}});
+            const resp = await res.json();
             if (res.ok) {
-                setTimeout(location.assign.bind(location, "/"), 3000);
-                Toastify({
-                    text: "Signup complete",
-                    duration: 3000,
-                    close: true,
-                    gravity: "top", // `top` or `bottom`
-                    position: "right", // `left`, `center` or `right`
-                    stopOnFocus: false, // Prevents dismissing of toast on hover
-                }).showToast();
+                setTimeout(location.assign.bind(location, "/login"), 3000);
+                notyf.success(resp.message);
             } else {
-                const resp = await res.json();
-                alert(resp.message);
+                notyf.error(resp.message);
             }
         })
     }
 
     const form = document.getElementById('signup-form');
-    form.addEventListener('submit', formSubmit);
+    form.addEventListener('submit', submitSignupForm);
 </script>
 {{template "footer" .}}
