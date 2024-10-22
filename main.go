@@ -21,6 +21,7 @@ func main() {
 
 	mux.Handle("/api/v1/", APIMux())
 	mux.Handle("/session", http.HandlerFunc(Count))
+	mux.Handle("/profile", controller.ProfileHandler())
 
 	// authentication handler
 	mux.Handle("/login", controller.LoginHandler())

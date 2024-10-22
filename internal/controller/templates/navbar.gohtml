@@ -1,4 +1,4 @@
-{{define "navbar" }}
+{{define "navbar"}}
 <nav class="navbar sticky-top bg-body-tertiary w-100" data-bs-theme="dark" style="background-color: #DED1C5FF">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
@@ -18,10 +18,10 @@
             </li>
             {{ else }}
             <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/#">Profile</a>
+                <a class="nav-link active" aria-current="page" href="/profile">Profile</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/login">Signout</a>
+            <li class="nav-item" id="sign-out-button">
+                <a class="nav-link active" aria-current="page" href="/signout">Signout</a>
             </li>
             {{ end }}
         </ul>

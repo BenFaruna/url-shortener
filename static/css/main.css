@@ -54,3 +54,31 @@ ul.navbar-nav {
 li.nav-item {
     margin: 0 15px 0 10px;
 }
+
+div.profile {
+    margin-top: 10vh;
+    display: flex;
+    justify-content: center;
+}
+
+.card-image {
+    background: bisque;
+    color: aliceblue;
+    border-radius: 50%;
+    position: relative;
+}
+
+p.card-img-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 5rem;
+    height: 80%;
+    width: 80%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}

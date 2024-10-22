@@ -4,16 +4,17 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	_ "github.com/BenFaruna/url-shortener/internal/session/providers/memory"
 	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/BenFaruna/url-shortener/internal/model"
 	"github.com/BenFaruna/url-shortener/internal/session"
+	_ "github.com/BenFaruna/url-shortener/internal/session/providers/memory"
 )
 
 type FormToken struct {
@@ -152,6 +153,32 @@ func SignupHandler() http.Handler {
 	}))
 }
 
+func ProfileHandler() http.Handler {
+	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		renderer, err := NewRenderer()
+		if err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, "")
+			return
+		}
+		var user UserInfo
+		sess := GlobalSessions.SessionStart(w, r)
+		u := sess.Get("user")
+		if u != nil {
+			user = u.(UserInfo)
+		} else {
+			http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
+			return
+		}
+		data := struct{ User UserInfo }{
+			User: user,
+		}
+		if err := renderer.Render(w, "profile.gohtml", data); err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, "")
+			return
+		}
+	}))
+}
+
 func errorHandler(w http.ResponseWriter, _ *http.Request, status int, errorMessage string) {
 	//w.WriteHeader(status)
 	// w.Header().Set("Content-Type", "application/json")
@@ -184,4 +211,8 @@ func init() {
 	session.GlobalSession, _ = session.NewManager("memory", "gosessionid", 3600)
 	GlobalSessions = session.GlobalSession
 	go session.GlobalSession.GC()
+}
+
+func (u UserInfo) FirstLetter() string {
+	return string(unicode.ToUpper(rune(u.Username[0])))
 }

@@ -1,0 +1,21 @@
+{{template "header" .}}
+
+<div class="profile">
+    <div class="card mb-3" style="max-width: 540px;">
+        <div class="row g-0">
+            <div class="col-md-4 card-image">
+                <p class="card-img-text">{{.User.FirstLetter }}</p>
+            </div>
+            <div class="col-md-8">
+                <div class="card-body" style="width: fit-content;">
+                    <h5 class="card-title">Hello, {{.User.Username}}</h5>
+                        <p class="card-text">Short url count: 0</p>
+{{/*                    <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>*/}}
+{{/*                    <p class="card-text"><small class="text-body-secondary">Short url count: 0</small></p>*/}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{template "footer"}}

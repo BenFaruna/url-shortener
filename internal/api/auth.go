@@ -136,7 +136,12 @@ func signout() http.Handler {
 			errorHandler(w, r, http.StatusInternalServerError, "Session error")
 			return
 		}
-		controller.GlobalSessions.SessionDestroy(w, r)
+		if err := removeUserSession(w, r); err != nil {
+			errorHandler(w, r, http.StatusInternalServerError, "Session error")
+			return
+		}
+		w.Header().Del("Authorization")
+		w.Header().Set("Content-Type", "application/json")
 		resp := &Response{StatusCode: http.StatusOK, Message: fmt.Sprintf("%q logged out", user.(controller.UserInfo).Username)}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			errorHandler(w, r, http.StatusInternalServerError, "Error writing response")
@@ -165,6 +170,18 @@ func registerUserSession(w http.ResponseWriter, r *http.Request, u controller.Us
 	if err := sess.Set("accesstime", time.Now().Unix()); err != nil {
 		return fmt.Errorf("registerUserSession: unable to register session\n%v", err)
 	}
+	return nil
+}
+
+func removeUserSession(w http.ResponseWriter, r *http.Request) error {
+	sess := controller.GlobalSessions.SessionStart(w, r)
+	if err := sess.Delete("user"); err != nil {
+		return fmt.Errorf("removeUserSession: unable to remove session\n%v", err)
+	}
+	if err := sess.Delete("accesstime"); err != nil {
+		return fmt.Errorf("removeUserSession: unable to remove session\n%v", err)
+	}
+	controller.GlobalSessions.SessionDestroy(w, r)
 	return nil
 }
 
