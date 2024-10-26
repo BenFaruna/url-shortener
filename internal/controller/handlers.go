@@ -69,6 +69,19 @@ func HomeHandler() http.HandlerFunc {
 	}
 }
 
+// ShortenHandler godoc
+//
+//	@Summary		Shortens a url
+//	@Description	returns the short code of url shortened
+//	@Tags			url
+//	@Accept			json
+//	@Produce		json
+//	@Param			url	body		string	true	"url to shorten"
+//	@Success		201	{object}	model.StatusMessage
+//
+//	@Failure		403	{object}	model.StatusMessage
+//
+//	@Router			/shorten [post]
 func ShortenHandler(shortStringFunc func() string) http.Handler {
 	return Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/shorten" {
@@ -82,14 +95,17 @@ func ShortenHandler(shortStringFunc func() string) http.Handler {
 
 		shortenedURL, err := model.Db.Add(data.URL, shortenedURL)
 
+		w.Header().Set("Content-Type", "application/json")
 		if err != nil {
 			w.WriteHeader(http.StatusForbidden)
-			fmt.Fprint(w, err.Error())
+			json.NewEncoder(w).Encode(&model.StatusMessage{
+				Message: "Error",
+				Data:    err.Error(),
+			})
 			return
 		}
 
 		w.WriteHeader(201)
-		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(&model.StatusMessage{
 			Message: "url shortened",
 			Data:    r.URL.Hostname() + shortenedURL,
@@ -97,14 +113,31 @@ func ShortenHandler(shortStringFunc func() string) http.Handler {
 	}))
 }
 
+// GetFullAddressHandler godoc
+//
+//	@Summary		Full address of short code
+//	@Description	returns the full url of the short code
+//	@Tags			url
+//	@Accept			json
+//	@Produce		json
+//	@Param			url	path		string	true	"shortcode to url"
+//	@Success		200	{object}	model.StatusMessage
+//
+//	@Failure		404	{object}	model.StatusMessage
+//
+//	@Router			/address/{url} [get]
 func GetFullAddressHandler() http.Handler {
 	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shortAddress := strings.TrimPrefix(r.URL.Path, "/address/")
 
+		w.Header().Set("Content-Type", "application/json")
 		url, ok := model.Db.Get(shortAddress)
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "address does not exist")
+			json.NewEncoder(w).Encode(model.StatusMessage{
+				Data:    "address does not exist",
+				Message: "Error",
+			})
 			return
 		}
 

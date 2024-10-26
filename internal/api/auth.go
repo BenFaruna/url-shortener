@@ -27,14 +27,28 @@ func AuthMux() http.Handler {
 	return authMux
 }
 
+// signup godoc
+//
+//	@Summary		signup user
+//	@Description	register user details to database
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			username	body		string	true	"username"
+//	@Param			password	body		string	true	"password"
+//	@Success		201			{object}	Response
+//
+//	@Failure		400			{object}	Response
+//	@Failure		500			{object}	Response
+//
+//	@Router			/signup [post]
 func signup() http.Handler {
 	return controller.Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		formInput := &controller.AuthFormInput{}
 		defer r.Body.Close()
 		err := json.NewDecoder(r.Body).Decode(formInput)
 		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
+			errorHandler(w, r, http.StatusBadRequest, "bad json input")
 			return
 		}
 		// TODO: validate token
@@ -74,6 +88,21 @@ func signup() http.Handler {
 	}))
 }
 
+// signin godoc
+//
+//	@Summary		signin user
+//	@Description	login user and create user session
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			username	body		string	true	"username"
+//	@Param			password	body		string	true	"password"
+//	@Success		200			{object}	Response
+//
+//	@Failure		400			{object}	Response
+//	@Failure		500			{object}	Response
+//
+//	@Router			/signin [post]
 func signin() http.Handler {
 	return controller.Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		formInput := &controller.AuthFormInput{}
@@ -124,6 +153,20 @@ func signin() http.Handler {
 	}))
 }
 
+// signout godoc
+//
+//	@Summary					signout user
+//	@Description				logout user and destroy user session
+//	@Tags						auth
+//	@Accept						json
+//	@Produce					json
+//	@securitydefinitions.basic	BasicAuth
+//	@Success					200	{object}	Response
+//
+//	@Failure					401	{object}	Response
+//	@Failure					500	{object}	Response
+//
+//	@Router						/signout [post]
 func signout() http.Handler {
 	return controller.Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := controller.GlobalSessions.SessionStart(w, r)

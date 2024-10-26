@@ -8,4 +8,4 @@ test-model:
 test-api:
 	@go test github.com/BenFaruna/url-shortener/internal/api -v
 run:
-	@go build && ./url-shortener
+	@swag init && go build && ./url-shortener

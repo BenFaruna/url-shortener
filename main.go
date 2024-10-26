@@ -10,10 +10,27 @@ import (
 	_ "github.com/BenFaruna/url-shortener/internal/controller"
 	_ "github.com/BenFaruna/url-shortener/internal/database"
 	"github.com/BenFaruna/url-shortener/internal/session"
+
+	_ "github.com/BenFaruna/url-shortener/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 var globalSessions *session.Manager
 
+//	@title			URL Shortener API
+//	@version		1.0
+//	@description	This is a url shortener server.
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host		localhost:8000
+// @BasePath	/api/v1
 func main() {
 	mux := http.NewServeMux()
 
@@ -35,6 +52,10 @@ func main() {
 
 	script := http.FileServer(http.Dir("./static/js/"))
 	mux.Handle("/scripts/", http.StripPrefix("/scripts/", script))
+
+	mux.Handle("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
+	))
 
 	fmt.Println("Server started on port 8000")
 	if err := http.ListenAndServe(":8000", controller.IncomingRequest(mux)); err != nil {
