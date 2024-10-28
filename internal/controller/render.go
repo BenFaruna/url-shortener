@@ -2,10 +2,9 @@ package controller
 
 import (
 	"embed"
+	"github.com/BenFaruna/url-shortener/internal/database"
 	"html/template"
 	"io"
-
-	"github.com/BenFaruna/url-shortener/internal/model"
 )
 
 var (
@@ -26,7 +25,7 @@ func NewRenderer() (*Renderer, error) {
 	return &Renderer{templ: templ}, nil
 }
 
-func (r *Renderer) RenderData(w io.Writer, filename string, data []model.URLInfo) error {
+func (r *Renderer) RenderData(w io.Writer, filename string, data []database.URLInfo) error {
 	if err := r.templ.ExecuteTemplate(w, filename, data); err != nil {
 		return err
 	}

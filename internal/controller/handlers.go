@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/BenFaruna/url-shortener/internal/database"
 	"io"
 	"math/rand"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/BenFaruna/url-shortener/internal/model"
 	"github.com/BenFaruna/url-shortener/internal/session"
 	_ "github.com/BenFaruna/url-shortener/internal/session/providers/memory"
 )
@@ -49,16 +49,16 @@ func HomeHandler() http.HandlerFunc {
 		switch r.URL.Path {
 		case "/":
 			data := &struct {
-				URLs []model.URLInfo
+				URLs []database.URLInfo
 				User UserInfo
 			}{}
-			data.URLs = model.Db.GetAll()
+			data.URLs = database.ShortUrls{}.GetAll()
 			data.User = getUserSignedIn(w, r)
 			renderer.Render(w, "index.gohtml", data)
 			return
 		default:
 			shortID := strings.TrimPrefix(r.URL.Path, "/")
-			url, ok := model.Db.Get(shortID)
+			url, ok := database.ShortUrls{}.Get(shortID)
 			if !ok {
 				errorHandler(w, r, http.StatusNotFound, fmt.Sprintf("route %q does not exists", r.URL.Path))
 				return
@@ -77,9 +77,9 @@ func HomeHandler() http.HandlerFunc {
 //	@Accept			json
 //	@Produce		json
 //	@Param			url	body		string	true	"url to shorten"
-//	@Success		201	{object}	model.StatusMessage
+//	@Success		201	{object}	database.StatusMessage
 //
-//	@Failure		403	{object}	model.StatusMessage
+//	@Failure		403	{object}	database.StatusMessage
 //
 //	@Router			/shorten [post]
 func ShortenHandler(shortStringFunc func() string) http.Handler {
@@ -88,17 +88,17 @@ func ShortenHandler(shortStringFunc func() string) http.Handler {
 			errorHandler(w, r, http.StatusNotFound, fmt.Sprintf("route %q does not exists", r.URL.Path))
 			return
 		}
-		var data model.Body
+		var data database.Body
 		json.NewDecoder(r.Body).Decode(&data)
 
 		shortenedURL := shortStringFunc()
 
-		shortenedURL, err := model.Db.Add(data.URL, shortenedURL)
+		shortenedURL, err := database.ShortUrls{}.Add(data.URL, shortenedURL)
 
 		w.Header().Set("Content-Type", "application/json")
 		if err != nil {
 			w.WriteHeader(http.StatusForbidden)
-			json.NewEncoder(w).Encode(&model.StatusMessage{
+			json.NewEncoder(w).Encode(&database.StatusMessage{
 				Message: "Error",
 				Data:    err.Error(),
 			})
@@ -106,7 +106,7 @@ func ShortenHandler(shortStringFunc func() string) http.Handler {
 		}
 
 		w.WriteHeader(201)
-		json.NewEncoder(w).Encode(&model.StatusMessage{
+		json.NewEncoder(w).Encode(&database.StatusMessage{
 			Message: "url shortened",
 			Data:    r.URL.Hostname() + shortenedURL,
 		})
@@ -121,9 +121,9 @@ func ShortenHandler(shortStringFunc func() string) http.Handler {
 //	@Accept			json
 //	@Produce		json
 //	@Param			url	path		string	true	"shortcode to url"
-//	@Success		200	{object}	model.StatusMessage
+//	@Success		200	{object}	database.StatusMessage
 //
-//	@Failure		404	{object}	model.StatusMessage
+//	@Failure		404	{object}	database.StatusMessage
 //
 //	@Router			/address/{url} [get]
 func GetFullAddressHandler() http.Handler {
@@ -131,17 +131,17 @@ func GetFullAddressHandler() http.Handler {
 		shortAddress := strings.TrimPrefix(r.URL.Path, "/address/")
 
 		w.Header().Set("Content-Type", "application/json")
-		url, ok := model.Db.Get(shortAddress)
+		url, ok := database.ShortUrls{}.Get(shortAddress)
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(model.StatusMessage{
+			json.NewEncoder(w).Encode(database.StatusMessage{
 				Data:    "address does not exist",
 				Message: "Error",
 			})
 			return
 		}
 
-		json.NewEncoder(w).Encode(model.StatusMessage{
+		json.NewEncoder(w).Encode(database.StatusMessage{
 			Data:    url,
 			Message: "address found",
 		})
@@ -213,8 +213,7 @@ func ProfileHandler() http.Handler {
 }
 
 func errorHandler(w http.ResponseWriter, _ *http.Request, status int, errorMessage string) {
-	//w.WriteHeader(status)
-	// w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	if status == http.StatusNotFound {
 		fmt.Fprint(w, errorMessage)
 	}
@@ -234,7 +233,7 @@ func GenerateShortString() string {
 
 	for i := 0; i < 6; i++ {
 		n := rand.Intn(51)
-		output += string(model.Characters[n])
+		output += string(database.Characters[n])
 	}
 
 	return output

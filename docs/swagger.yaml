@@ -7,7 +7,7 @@ definitions:
       status_code:
         type: integer
     type: object
-  model.StatusMessage:
+  database.StatusMessage:
     properties:
       data:
         type: string
@@ -45,11 +45,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.StatusMessage'
+            $ref: '#/definitions/database.StatusMessage'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/model.StatusMessage'
+            $ref: '#/definitions/database.StatusMessage'
       summary: Full address of short code
       tags:
       - url
@@ -71,11 +71,11 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/model.StatusMessage'
+            $ref: '#/definitions/database.StatusMessage'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/model.StatusMessage'
+            $ref: '#/definitions/database.StatusMessage'
       summary: Shortens a url
       tags:
       - url

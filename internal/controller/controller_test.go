@@ -3,6 +3,7 @@ package controller_test
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/BenFaruna/url-shortener/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/BenFaruna/url-shortener/internal/controller"
-	"github.com/BenFaruna/url-shortener/internal/model"
 )
 
 func TestURLShortenerEndpoint(t *testing.T) {
@@ -50,11 +50,11 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		defer server.Close()
 
 		// first short string entry
-		_ = json.NewEncoder(buf).Encode(model.Body{URL: url})
+		_ = json.NewEncoder(buf).Encode(database.Body{URL: url})
 		_, _ = http.Post(server.URL+"/shorten", "application/json", buf)
 
 		// duplicate short string request
-		_ = json.NewEncoder(buf).Encode(model.Body{URL: url})
+		_ = json.NewEncoder(buf).Encode(database.Body{URL: url})
 		response, err := http.Post(server.URL+"/shorten", "application/json", buf)
 		handleError(t, err)
 
@@ -66,13 +66,13 @@ func TestURLShortenerEndpoint(t *testing.T) {
 		_, err = buf.ReadFrom(response.Body)
 		handleError(t, err)
 
-		if buf.String() != model.ErrorDuplicateShortString.Error() {
-			t.Errorf("Expected error message %q, got %q", model.ErrorEmptyString, buf.String())
+		if buf.String() != database.ErrorDuplicateShortString.Error() {
+			t.Errorf("Expected error message %q, got %q", database.ErrorEmptyString, buf.String())
 		}
 	})
 
 	t.Run("/api/v1/address/:string returns the full address", func(t *testing.T) {
-		var output model.StatusMessage
+		var output database.StatusMessage
 
 		url := "https://pkg.go.dev/net/http/httptest#NewRequest"
 		address, err := shortenAddress(url, controller.GenerateShortString)
@@ -121,13 +121,13 @@ func TestURLShortenerEndpoint(t *testing.T) {
 
 func shortenAddress(url string, shortStringGenerator func() string) (string, error) {
 	buf := &bytes.Buffer{}
-	data, err := json.Marshal(model.Body{URL: url})
+	data, err := json.Marshal(database.Body{URL: url})
 	if err != nil {
 		return "", err
 	}
 	buf.Write(data)
 
-	var output model.StatusMessage
+	var output database.StatusMessage
 
 	// requirements:
 	// url to shorten are sent as part of the body of the request

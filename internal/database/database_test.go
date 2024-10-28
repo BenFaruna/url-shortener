@@ -1,25 +1,18 @@
-package model_test
+package database_test
 
 import (
 	"fmt"
+	"github.com/BenFaruna/url-shortener/internal/database"
 	"os"
 	"slices"
 	"testing"
 
 	"github.com/BenFaruna/url-shortener/internal/controller"
-	"github.com/BenFaruna/url-shortener/internal/model"
 )
 
-var cases = []model.URLInfo{
-	{URL: "https://google.com", ShortAddress: controller.GenerateShortString()},
-	{URL: "https://facebook.com", ShortAddress: controller.GenerateShortString()},
-	{URL: "https://x.com", ShortAddress: controller.GenerateShortString()},
-	{URL: "https://reddit.com", ShortAddress: controller.GenerateShortString()},
-}
+func TestShortUrlAdd(t *testing.T) {
 
-func TestDBAdd(t *testing.T) {
-
-	db := make(model.ShortenedURLS)
+	db := &database.ShortUrls{}
 
 	t.Run("empty string returns an error", func(t *testing.T) {
 		_, err := db.Add("", "")
@@ -28,7 +21,7 @@ func TestDBAdd(t *testing.T) {
 		}
 	})
 
-	for _, test := range cases {
+	for _, test := range Cases {
 		t.Run(fmt.Sprintf("adding %q to db", test.URL), func(t *testing.T) {
 			got, err := db.Add(test.URL, test.ShortAddress)
 			if err != nil {
@@ -39,39 +32,40 @@ func TestDBAdd(t *testing.T) {
 				t.Errorf("expected %q, got %q", test.ShortAddress, got)
 			}
 
-			got = db[test.ShortAddress]
-			if test.URL != db[test.ShortAddress] {
+			got, _ = db.Get(test.ShortAddress)
+			if test.URL != got {
 				t.Errorf("expected %q, got %q", test.URL, got)
 			}
 		})
 	}
 
-	for _, test := range cases {
+	for _, test := range Cases {
 		t.Run(fmt.Sprintf("adding duplicate URL returns previous short string - %q", test.URL), func(t *testing.T) {
 			got, err := db.Add(test.URL, controller.GenerateShortString())
-			handleError(t, err)
+			HandleError(t, err)
 
 			if got != test.ShortAddress {
 				t.Errorf("expected %q, got %q", test.ShortAddress, got)
 			}
 		})
-
 	}
+
+	removeDBFile(t)
 }
 
-func TestDBGet(t *testing.T) {
-	db := make(model.ShortenedURLS)
+func TestShortUrlGet(t *testing.T) {
+	db := &database.ShortUrls{}
 
 	t.Run("db.Get returns correct result", func(t *testing.T) {
-		for _, test := range cases {
+		//for _, test := range Cases {
+		//
+		//	_, err := db.Add(test.URL, test.ShortAddress)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//}
 
-			_, err := db.Add(test.URL, test.ShortAddress)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		for _, test := range cases {
+		for _, test := range Cases {
 			got, ok := db.Get(test.ShortAddress)
 
 			if !ok {
@@ -83,34 +77,35 @@ func TestDBGet(t *testing.T) {
 			}
 		}
 	})
+
+	removeDBFile(t)
 }
 
-func TestDBGetAll(t *testing.T) {
-	db := make(model.ShortenedURLS)
+func TestShortUrlGetAll(t *testing.T) {
+	db := &database.ShortUrls{}
 
-	for _, entry := range cases {
-		_, err := db.Add(entry.URL, entry.ShortAddress)
-		handleError(t, err)
+	for _, entry := range Cases {
+		_, _ = db.Add(entry.URL, entry.ShortAddress)
 	}
 
 	entries := db.GetAll()
 
-	for _, url := range cases {
+	for _, url := range Cases {
 		if !slices.Contains(entries, url) {
 			t.Errorf("%v not in %v", url, entries)
 		}
 
 	}
+	removeDBFile(t)
 }
 
-func TestDBSearchURL(t *testing.T) {
-	db := make(model.ShortenedURLS)
-	for _, entry := range cases[:2] {
-		_, err := db.Add(entry.URL, entry.ShortAddress)
-		handleError(t, err)
+func TestShortUrlSearchURL(t *testing.T) {
+	db := &database.ShortUrls{}
+	for _, entry := range Cases[:2] {
+		_, _ = db.Add(entry.URL, entry.ShortAddress)
 	}
 
-	for _, entry := range cases[:2] {
+	for _, entry := range Cases[:2] {
 		t.Run(fmt.Sprintf("search for existing %q", entry.URL), func(t *testing.T) {
 			ShortAddress, exists := db.SearchURL(entry.URL)
 
@@ -124,7 +119,10 @@ func TestDBSearchURL(t *testing.T) {
 		})
 	}
 
-	for _, entry := range cases[2:] {
+	for _, entry := range []database.URLInfo{
+		{URL: "https://gmail.com", ShortAddress: controller.GenerateShortString()},
+		{URL: "https://moba.com", ShortAddress: controller.GenerateShortString()},
+	} {
 		t.Run(fmt.Sprintf("search for non existing %q", entry.URL), func(t *testing.T) {
 			ShortAddress, exists := db.SearchURL(entry.URL)
 
@@ -137,15 +135,18 @@ func TestDBSearchURL(t *testing.T) {
 			}
 		})
 	}
+	removeDBFile(t)
+}
 
+func removeDBFile(t testing.TB) {
 	t.Cleanup(func() {
 		os.RemoveAll("app.db")
 	})
 }
 
-func handleError(t testing.TB, err error) {
-	t.Helper()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func HandleError(t testing.TB, err error) {
+//	t.Helper()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}

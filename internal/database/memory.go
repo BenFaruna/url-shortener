@@ -1,4 +1,4 @@
-package model
+package database
 
 import (
 	"errors"
@@ -26,6 +26,14 @@ var ErrorDuplicateShortString = errors.New("duplicate short string entry")
 var Characters string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 var Db ShortenedURLS = make(ShortenedURLS)
+
+type UrlDb interface {
+	Add(url, shortLink string) (string, error)
+	Get(shortUrl string) (string, bool)
+	GetAll() []URLInfo
+	IsExists(shortURL string) bool
+	SearchURL(url string) (string, bool)
+}
 
 func (s ShortenedURLS) Add(url, shortLink string) (string, error) {
 	if url == "" || shortLink == "" {

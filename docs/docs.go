@@ -50,13 +50,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.StatusMessage"
+                            "$ref": "#/definitions/database.StatusMessage"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.StatusMessage"
+                            "$ref": "#/definitions/database.StatusMessage"
                         }
                     }
                 }
@@ -90,13 +90,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.StatusMessage"
+                            "$ref": "#/definitions/database.StatusMessage"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/model.StatusMessage"
+                            "$ref": "#/definitions/database.StatusMessage"
                         }
                     }
                 }
@@ -260,7 +260,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.StatusMessage": {
+        "database.StatusMessage": {
             "type": "object",
             "properties": {
                 "data": {
