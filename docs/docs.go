@@ -24,6 +24,90 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/address/shorten": {
+            "post": {
+                "description": "returns the short code of url shortened",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "url"
+                ],
+                "summary": "Shortens a url",
+                "parameters": [
+                    {
+                        "description": "url to shorten",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/database.Body"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/database.StatusMessage"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/database.StatusMessage"
+                        }
+                    }
+                }
+            }
+        },
+        "/address/{url-id}": {
+            "delete": {
+                "description": "deletes short urls using the url id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "url"
+                ],
+                "summary": "delete address and short code from database",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "url id in database",
+                        "name": "url-id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/database.StatusMessage"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/database.StatusMessage"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/database.StatusMessage"
+                        }
+                    }
+                }
+            }
+        },
         "/address/{url}": {
             "get": {
                 "description": "returns the full url of the short code",
@@ -62,46 +146,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/shorten": {
-            "post": {
-                "description": "returns the short code of url shortened",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "url"
-                ],
-                "summary": "Shortens a url",
-                "parameters": [
-                    {
-                        "description": "url to shorten",
-                        "name": "url",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/database.StatusMessage"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/database.StatusMessage"
-                        }
-                    }
-                }
-            }
-        },
         "/signin": {
             "post": {
                 "description": "login user and create user session",
@@ -117,21 +161,12 @@ const docTemplate = `{
                 "summary": "signin user",
                 "parameters": [
                     {
-                        "description": "username",
-                        "name": "username",
+                        "description": "username and password",
+                        "name": "account",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "password",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.AuthFormInput"
                         }
                     }
                 ],
@@ -207,21 +242,12 @@ const docTemplate = `{
                 "summary": "signup user",
                 "parameters": [
                     {
-                        "description": "username",
-                        "name": "username",
+                        "description": "username and password",
+                        "name": "account",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "password",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/controller.AuthFormInput"
                         }
                     }
                 ],
@@ -257,6 +283,25 @@ const docTemplate = `{
                 },
                 "status_code": {
                     "type": "integer"
+                }
+            }
+        },
+        "controller.AuthFormInput": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "database.Body": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
                 }
             }
         },

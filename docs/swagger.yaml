@@ -7,6 +7,18 @@ definitions:
       status_code:
         type: integer
     type: object
+  controller.AuthFormInput:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  database.Body:
+    properties:
+      url:
+        type: string
+    type: object
   database.StatusMessage:
     properties:
       data:
@@ -28,6 +40,35 @@ info:
   title: URL Shortener API
   version: "1.0"
 paths:
+  /address/{url-id}:
+    delete:
+      consumes:
+      - application/json
+      description: deletes short urls using the url id
+      parameters:
+      - description: url id in database
+        in: path
+        name: url-id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.StatusMessage'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/database.StatusMessage'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/database.StatusMessage'
+      summary: delete address and short code from database
+      tags:
+      - url
   /address/{url}:
     get:
       consumes:
@@ -53,7 +94,7 @@ paths:
       summary: Full address of short code
       tags:
       - url
-  /shorten:
+  /address/shorten:
     post:
       consumes:
       - application/json
@@ -64,7 +105,7 @@ paths:
         name: url
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/database.Body'
       produces:
       - application/json
       responses:
@@ -85,18 +126,12 @@ paths:
       - application/json
       description: login user and create user session
       parameters:
-      - description: username
+      - description: username and password
         in: body
-        name: username
+        name: account
         required: true
         schema:
-          type: string
-      - description: password
-        in: body
-        name: password
-        required: true
-        schema:
-          type: string
+          $ref: '#/definitions/controller.AuthFormInput'
       produces:
       - application/json
       responses:
@@ -144,18 +179,12 @@ paths:
       - application/json
       description: register user details to database
       parameters:
-      - description: username
+      - description: username and password
         in: body
-        name: username
+        name: account
         required: true
         schema:
-          type: string
-      - description: password
-        in: body
-        name: password
-        required: true
-        schema:
-          type: string
+          $ref: '#/definitions/controller.AuthFormInput'
       produces:
       - application/json
       responses:

@@ -13,7 +13,7 @@
             const resp = await res.json();
             if (res.ok) {
                 notyf.success(resp.message);
-                setTimeout(location.assign.bind(location, "/"), 2100);
+                setTimeout(location.assign.bind(location, "/login"), 2100);
             } else {
                 notyf.error(resp.message);
             }

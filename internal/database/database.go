@@ -3,8 +3,9 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var DB = &sql.DB{}
@@ -51,12 +52,23 @@ func (s ShortUrls) Get(shortUrl string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
+	if userId.Valid {
+		if err = userId.Scan(&s.UserID); err != nil {
+			log.Printf("ShortUrls.Get: %v\n", err)
+		}
+	}
 	return s.URL, true
 }
 
-func (s ShortUrls) GetAll() []URLInfo {
+func (s ShortUrls) GetAll(userId int64) []URLInfo {
+	var query string
+	if userId != 0 {
+		query = "SELECT * FROM shorturls WHERE user_id=?;"
+	} else {
+		query = "SELECT * FROM shorturls;"
+	}
 	urls := make([]URLInfo, 0)
-	rows, err := DB.Query("SELECT * FROM shorturls;")
+	rows, err := DB.Query(query, userId)
 	if err != nil {
 		return urls
 	}
@@ -69,12 +81,31 @@ func (s ShortUrls) GetAll() []URLInfo {
 			log.Printf("ShortUrls.GetAll: %v\n", err)
 			continue
 		}
+		if id.Valid {
+			url.UrlId = id.Int64
+		}
+		if userId.Valid {
+			url.UserId = userId.Int64
+		}
 		urls = append(urls, url)
 	}
 	return urls
 }
 
-func (s ShortUrls) Add(url, shortLink string) (string, error) {
+func (s ShortUrls) IsUserURL(userId int64, shortLink string) bool {
+	if userId == 0 {
+		return false
+	}
+	r, err := DB.Query("SELECT * FROM shorturls WHERE user_id=? AND short_string LIKE ?", userId, shortLink)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+	ok := r.Next()
+	return ok
+}
+
+func (s ShortUrls) Add(userId int64, url, shortLink string) (string, error) {
 	if url == "" || shortLink == "" {
 		return "", ErrorEmptyString
 	}
@@ -85,38 +116,47 @@ func (s ShortUrls) Add(url, shortLink string) (string, error) {
 
 	var shortUrlTemp string
 
-	existingLink, exists := s.SearchURL(url)
+	existingLink, urlUserId, exists := s.SearchURL(url)
 	if exists {
 		shortUrlTemp = existingLink
 	} else {
 		shortUrlTemp = shortLink
 	}
-	_, err := DB.Exec("INSERT INTO shorturls (url, short_string, user_id) VALUES(?, ?, ?);",
-		url, shortUrlTemp, nil)
-	if err != nil {
-		return "", err
+
+	if userId != urlUserId || urlUserId != 0 {
+		_, err := DB.Exec("INSERT INTO shorturls (url, short_string, user_id) VALUES(?, ?, ?);",
+			url, shortUrlTemp, userId)
+		if err != nil {
+			return "", err
+		}
 	}
+
 	return shortUrlTemp, nil
+}
+
+func (s ShortUrls) Delete(userId int64, shortLink string) error {
+	_, err := DB.Exec("DELETE FROM shorturls WHERE short_string LIKE ? AND user_id = ?", shortLink, userId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s ShortUrls) IsExists(shortLink string) bool {
 	var userId sql.NullInt64
 	row := DB.QueryRow("SELECT * FROM shorturls WHERE short_string LIKE ? LIMIT 1", shortLink)
 	err := row.Scan(&s.ID, &s.URL, &s.ShortString, &userId)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
-func (s ShortUrls) SearchURL(url string) (string, bool) {
+func (s ShortUrls) SearchURL(url string) (string, int64, bool) {
 	var userId sql.NullInt64
 	row := DB.QueryRow("SELECT * FROM shorturls WHERE url LIKE ? LIMIT 1", url)
 	err := row.Scan(&s.ID, &s.URL, &s.ShortString, &userId)
 	if err != nil {
-		return "", false
+		return "", userId.Int64, false
 	}
-	return s.ShortString, true
+	return s.ShortString, userId.Int64, true
 }
 
 func init() {

@@ -15,6 +15,7 @@ type StatusMessage struct {
 }
 
 type URLInfo struct {
+	UserId, UrlId     int64
 	URL, ShortAddress string
 }
 
@@ -28,9 +29,9 @@ var Characters string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 var Db ShortenedURLS = make(ShortenedURLS)
 
 type UrlDb interface {
-	Add(url, shortLink string) (string, error)
+	Add(userId int64, url, shortLink string) (string, error)
 	Get(shortUrl string) (string, bool)
-	GetAll() []URLInfo
+	GetAll(userId int64) []URLInfo
 	IsExists(shortURL string) bool
 	SearchURL(url string) (string, bool)
 }

@@ -4,12 +4,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/BenFaruna/url-shortener/internal/controller"
-	"github.com/BenFaruna/url-shortener/internal/database"
-	"golang.org/x/crypto/bcrypt"
 	"html"
 	"net/http"
 	"time"
+
+	"github.com/BenFaruna/url-shortener/internal/controller"
+	"github.com/BenFaruna/url-shortener/internal/database"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Response struct {
@@ -34,8 +35,7 @@ func AuthMux() http.Handler {
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			username	body		string	true	"username"
-//	@Param			password	body		string	true	"password"
+//	@Param			account	body		controller.AuthFormInput	true	"username and password"
 //	@Success		201			{object}	Response
 //
 //	@Failure		400			{object}	Response
@@ -71,7 +71,7 @@ func signup() http.Handler {
 		user := database.User{Username: username, Password: password}
 		err = user.Add()
 		if err != nil {
-			errorHandler(w, r, http.StatusBadRequest, fmt.Sprintf("User not added: username already exists"))
+			errorHandler(w, r, http.StatusBadRequest, "User not added: username already exists")
 			return
 		}
 		//userInfo := controller.UserInfo{ID: user.ID, Username: user.Username}
@@ -95,8 +95,7 @@ func signup() http.Handler {
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			username	body		string	true	"username"
-//	@Param			password	body		string	true	"password"
+//	@Param			account	body		controller.AuthFormInput	true	"username and password"
 //	@Success		200			{object}	Response
 //
 //	@Failure		400			{object}	Response

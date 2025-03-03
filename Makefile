@@ -9,3 +9,5 @@ test-api:
 	@go test github.com/BenFaruna/url-shortener/internal/api -v
 run:
 	@swag init && go build && ./url-shortener
+dev:
+	@swag init && air

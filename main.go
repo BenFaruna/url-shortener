@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/BenFaruna/url-shortener/internal/api"
 	"net/http"
 	"time"
+
+	"github.com/BenFaruna/url-shortener/internal/api"
 
 	"github.com/BenFaruna/url-shortener/internal/controller"
 	_ "github.com/BenFaruna/url-shortener/internal/controller"
@@ -66,10 +67,8 @@ func main() {
 func APIMux() http.Handler {
 	shortenerMux := http.NewServeMux()
 
-	shortenerMux.Handle("/shorten", controller.ShortenHandler(controller.GenerateShortString))
-	shortenerMux.Handle("/address/", controller.GetFullAddressHandler())
-
 	shortenerMux.Handle("/", api.AuthMux())
+	shortenerMux.Handle("/address/", controller.AddressHandler())
 
 	return http.StripPrefix("/api/v1", shortenerMux)
 }
