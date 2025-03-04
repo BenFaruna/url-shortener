@@ -30,7 +30,7 @@ var globalSessions *session.Manager
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host		localhost:8000
+// @host		localhost:5080
 // @BasePath	/api/v1
 func main() {
 	mux := http.NewServeMux()
@@ -59,7 +59,7 @@ func main() {
 	))
 
 	fmt.Println("Server started on port 8000")
-	if err := http.ListenAndServe(":8000", controller.IncomingRequest(mux)); err != nil {
+	if err := http.ListenAndServe(":5080", controller.IncomingRequest(mux)); err != nil {
 		panic(err)
 	}
 }

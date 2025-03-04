@@ -1,0 +1,5 @@
+url-shortener
+.env
+app.db
+.idea
+tmp

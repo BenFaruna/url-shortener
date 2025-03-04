@@ -26,7 +26,7 @@ definitions:
       message:
         type: string
     type: object
-host: localhost:8000
+host: localhost:5080
 info:
   contact:
     email: support@swagger.io

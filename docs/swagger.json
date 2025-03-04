@@ -15,7 +15,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8000",
+    "host": "localhost:5080",
     "basePath": "/api/v1",
     "paths": {
         "/address/shorten": {
